@@ -8,6 +8,8 @@ angular.module('ezPAARSE.form-controllers', [])
       $location.path('/process');
     }
 
+    settingService.getPersonalSettings();
+
     $scope.files     = [];
     $scope.totalSize = 0;
     $scope.showHelp  = false;

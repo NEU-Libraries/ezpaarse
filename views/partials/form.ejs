@@ -13,8 +13,8 @@
             <i class="loading spinner icon"></i>
           </div>
           <div class="sub header" ng-show="ss.predefined">
-            <span ng-show="ss.settingsType" ng-bind="ss.predefined[ss.settingsType].fullName"></span>
-            <span ng-show="!ss.settingsType" translate>settings+default</span>
+            <span ng-show="ss.settingsLabel" ng-bind="ss.settingsLabel"></span>
+            <span ng-hide="ss.settingsLabel" translate>settings+default</span>
             <span ng-show="ss.custom"> ({{ 'settings+modified' | translate }})</span>
           </div>
         </div>

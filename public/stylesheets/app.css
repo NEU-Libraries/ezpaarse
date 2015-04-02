@@ -237,10 +237,15 @@ textarea#log-lines {
 .left.aligned    { text-align: left !important; }
 .center.aligned  { text-align: center !important; }
 
+.right.floated   { float: right; }
+.left.floated    { float: left; }
+
 .terminal .error { color: red; }
 .terminal .warn  { color: orange; }
 .terminal .info  { color: green; }
 .terminal .silly { color: grey; }
+
+.chosen-container { width: 350px !important; }
 
 /**
  * Feedback sidebar

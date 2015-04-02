@@ -1,17 +1,43 @@
-      <div class="ui two column grid">
-        <div class="column">
+
+      <i class="right floated big help link icon" ng-class="{true: 'black', false: 'teal'}[showHelp]" ng-click="toggleHelp()"></i>
+
+      <accordion class="ui accordion">
+        <div class="title">
+          <i class="dropdown icon"></i>
+          {{ 'settings+custom_settings' | translate }}
+        </div>
+        <div class="content">
           <div ng-hide="ss.predefined"><i class="large loading spinner icon"></i> {{ 'settings+loading_predefined' | translate }}</div>
-          <div ng-show="ss.predefined">
-            <select chosen ng-model="predefined" ng-change="ss.defineSettings(predefined)" data-placeholder="{{ 'settings+predefined_choice' | translate }}" no-results-text="'{{ 'settings+no_result_for' | translate }}'" allow-single-deselect="true" ng-options="key as (val.country + ' - ' + val.fullName) for (key, val) in ss.predefined">
+          <span ng-show="ss.predefined">
+            <select chosen ng-model="predefined" ng-change="ss.defineSettings(predefined); personal = ''" data-placeholder="{{ 'settings+predefined_choice' | translate }}" no-results-text="'{{ 'settings+no_result_for' | translate }}'" allow-single-deselect="true" ng-options="key as (val.country + ' - ' + val.fullName) for (key, val) in ss.predefined">
               <option value=""></option>
             </select>
-          </div>
-        </div>
+          </span>
 
-        <div class="right aligned column">
-          <i class="big help link icon" ng-class="{true: 'black', false: 'teal'}[showHelp]" ng-click="toggleHelp()"></i>
+          <div ng-hide="ss.personal"><i class="large loading spinner icon"></i> {{ 'settings+loading_personal' | translate }}</div>
+          <span ng-show="ss.personal">
+            <select chosen ng-model="personal" ng-change="ss.defineSettings(personal, true); personalName = personal; predefined = ''" data-placeholder="{{ 'settings+personal_choice' | translate }}" no-results-text="'{{ 'settings+no_result_for' | translate }}'" allow-single-deselect="true" ng-options="key as key for (key, val) in ss.personal">
+              <option value=""></option>
+            </select>
+          </span>
+
+          <div ng-if="personal" class="ui mini icon button" ng-class="{ loading: ss.deletingSettings }" ng-click="ss.deleteSettings(personal)"><i class="trash icon"></i> {{ 'settings+delete' | translate }}</div>
+
+          <div class="ui divider"></div>
+
+          <form class="ui small form" ng-submit="ss.saveSettingsAs(personalName)">
+            <div class="six wide field">
+              <label translate>settings+save_current_as</label>
+              <div class="ui icon input" ng-class="{ loading: ss.savingSettings }">
+                <input type="text" ng-model="personalName" required>
+                <i class="icon" ng-class="{ checkmark: ss.savingSettingsSuccess, save: !ss.savingSettingsSuccess }"></i>
+              </div>
+            </div>
+          </form>
+
+          <div ng-show="ss.settingsError" class="ui small compact error message" translate>settings+error</div>
         </div>
-      </div>
+      </accordion>
 
       <div class="ui teal dividing header" translate>settings+input</div>
 

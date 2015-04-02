@@ -343,8 +343,10 @@ angular.module('ezPAARSE.services', [])
         .success(function (data) {
           self.predefined = data;
 
-          if (data[self.settingsType]) {
-            var settings = self.getSettingsFrom(self.settingsType);
+          var predefined = data[self.settingsType];
+
+          if (predefined) {
+            var settings = self.getSettingsFrom(predefined.headers, predefined.fullName);
             if (settings) {
               self._control = settings;
               self.control();
@@ -364,11 +366,92 @@ angular.module('ezPAARSE.services', [])
     };
 
     /**
+     * Get personal settings of the connected user
+     */
+    settingService.prototype.getPersonalSettings = function () {
+      var self = this;
+      self.personal = undefined;
+
+      $http.get('/settings')
+        .success(function (data) {
+          self.personal = data;
+
+          var headers = data[self.customType];
+          if (headers) {
+            var settings = self.getSettingsFrom(headers, self.customType);
+            if (settings) {
+              self._control = settings;
+              self.control();
+            }
+          }
+        })
+        .error(function () {
+          self.personal = {};
+        });
+    };
+
+    /**
+     * Save current settings under a personal label
+     */
+    settingService.prototype.saveSettingsAs = function (label) {
+      if (!label) { return; }
+
+      var self    = this;
+      var headers = this.getHeaders();
+
+      self.savingSettings        = true;
+      self.savingSettingsSuccess = false;
+      self.settingsError         = false;
+
+      $http.post('/settings/' + label, headers)
+        .success(function (data) {
+          if (typeof self.personal === 'object') {
+            self.personal[label] = headers;
+          }
+          self.savingSettings        = false;
+          self.savingSettingsSuccess = true;
+        })
+        .error(function () {
+          self.savingSettings = false;
+          self.settingsError  = true;
+        });
+    };
+
+    /**
+     * Delete a specific set of settings
+     */
+    settingService.prototype.deleteSettings = function (label) {
+      if (!label) { return; }
+
+      var self    = this;
+      var headers = this.getHeaders();
+
+      self.deletingSettings = true;
+      self.settingsError    = false;
+
+      $http({ method: 'DELETE', url: '/settings/' + label })
+        .success(function (data) {
+          if (typeof self.personal === 'object') {
+            delete self.personal[label];
+          }
+          self.deletingSettings = false;
+        })
+        .error(function () {
+          self.deletingSettings = false;
+          self.settingsError    = true;
+        });
+    };
+
+    /**
      * Returns settings as a list of headers for a request
      */
     settingService.prototype.getHeaders = function () {
       var settings = this.settings;
       var headers  = angular.copy(settings.headers);
+
+      for (var i in headers) {
+        if (headers[i].length === 0) { delete headers[i]; }
+      }
 
       if (this.settingsType && !this.custom) {
         return { 'ezPAARSE-Predefined-Settings': this.settingsType };
@@ -484,10 +567,12 @@ angular.module('ezPAARSE.services', [])
      * Reset settings to default
      */
     settingService.prototype.loadDefault = function () {
-      this.settings     = angular.copy(this.defaults);
-      this._control     = angular.copy(this.defaults);
-      this.custom       = false;
-      this.settingsType = undefined;
+      this.settings      = angular.copy(this.defaults);
+      this._control      = angular.copy(this.defaults);
+      this.custom        = false;
+      this.settingsType  = undefined;
+      this.customType    = undefined;
+      this.settingsLabel = undefined;
       this.saveSettings();
     };
 
@@ -496,14 +581,16 @@ angular.module('ezPAARSE.services', [])
      * @param  {String} type predefined setting key
      * @return {Object}      settings
      */
-    settingService.prototype.getSettingsFrom = function (type) {
-      var setting = this.predefined[type];
-      if (!setting || !setting.headers) { return; }
+    settingService.prototype.getSettingsFrom = function (headersObj, label) {
+      if (!headersObj) {
+        return this.settingsLabel = undefined;
+      }
+      this.settingsLabel = label;
 
       var settings = angular.copy(this.defaults);
-      var headers  = angular.copy(setting.headers);
+      var headers  = angular.copy(headersObj);
 
-      if (headers['Output-Fields']) {
+      if (typeof headers['Output-Fields'] === 'string') {
         var fields = headers['Output-Fields'].split(',');
         fields.forEach(function (field) {
           field = field.trim();
@@ -537,29 +624,38 @@ angular.module('ezPAARSE.services', [])
      * Load settings from a predefined object
      * @param  {String} type predefined setting key
      */
-    settingService.prototype.defineSettings = function (type) {
-      this.settings = angular.copy(this.defaults);
-      if (!type) {
+    settingService.prototype.defineSettings = function (type, personal) {
+
+      if (personal) {
+        this.settings  = this.getSettingsFrom(this.personal[type], type);
+      } else {
+        var predefined = this.predefined[type] || {};
+        this.settings  = this.getSettingsFrom(predefined.headers, predefined.fullName);
+      }
+
+      if (this.settings) {
+        this.settingsType = personal ? undefined : type;
+        this.customType   = personal ? type : undefined;
+      } else {
         this.settingsType = undefined;
-      }
-      var settings = this.getSettingsFrom(type);
-
-      if (settings) {
-        this.settings     = settings;
-        this.settingsType = type;
+        this.customType   = undefined;
+        this.settings = angular.copy(this.defaults);
       }
 
-      this._control = angular.copy(settings || this.defaults);
+      this._control = angular.copy(this.settings || this.defaults);
+      this.saveSettings();
     };
 
     /**
-     * Load ookies and overwrite current settings
+     * Load cookies and overwrite current settings
      */
     settingService.prototype.loadSavedSettings = function () {
 
       this.remember     = ipCookie('remember');
       this.settingsType = ipCookie('settingsType');
+      this.customType   = ipCookie('customType');
       var settings      = ipCookie('settings');
+
       if (!settings) { return; }
 
       for (var opt in settings) {
@@ -589,6 +685,12 @@ angular.module('ezPAARSE.services', [])
         ipCookie('settingsType', this.settingsType, { expires: 180 });
       } else {
         ipCookie.remove('settingsType');
+      }
+
+      if (this.remember && this.customType) {
+        ipCookie('customType', this.customType, { expires: 180 });
+      } else {
+        ipCookie.remove('customType');
       }
     };
 

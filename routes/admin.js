@@ -321,6 +321,68 @@ module.exports = function (app) {
   );
 
   /**
+   * GET route on /settings
+   * To get personal settings
+   */
+  app.get('/settings', auth.ensureAuthenticated(true), function (req, res) {
+    var body = req.body;
+
+    userlist.get(req.user.username, function (err, user) {
+      if (err)   { return res.status(500).end(); }
+      if (!user) { return res.status(404).end(); }
+
+      res.status(200).json(user.settings || {});
+    });
+  });
+
+  /**
+   * POST route on /settings
+   * To save custom settings
+   */
+  app.post(/^\/settings\/(.+)/, auth.ensureAuthenticated(true),
+    bodyParser.urlencoded({ extended: true }), bodyParser.json(), function (req, res) {
+      var body = req.body || {};
+      var name = req.params[0];
+
+      for (var h in body) {
+        if (typeof body[h] !== 'string') { delete body[h]; }
+      }
+
+      userlist.get(req.user.username, function (err, user) {
+        if (err)   { return res.status(500).end(); }
+        if (!user) { return res.status(404).end(); }
+
+        user.settings = user.settings || {};
+        user.settings[name] = body;
+
+        userlist.set(req.user.username, 'settings', user.settings, function (err) {
+          res.status(err ? 500 : 204).end();
+        });
+      });
+    }
+  );
+
+  /**
+   * DELETE route on /settings
+   * To remove custom settings
+   */
+  app.delete(/^\/settings\/(.+)/, auth.ensureAuthenticated(true), function (req, res) {
+    var body = req.body;
+
+    userlist.get(req.user.username, function (err, user) {
+      if (err)   { return res.status(500).end(); }
+      if (!user) { return res.status(404).end(); }
+
+      user.settings = user.settings || {};
+      delete user.settings[req.params[0]];
+
+      userlist.set(req.user.username, 'settings', user.settings, function (err) {
+        res.status(err ? 500 : 204).end();
+      });
+    });
+  });
+
+  /**
    * GET route on /platforms/status
    * To know if there are incoming changes in the platforms directory
    */

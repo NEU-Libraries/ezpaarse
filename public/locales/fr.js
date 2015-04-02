@@ -122,10 +122,17 @@ ezLanguages['fr'] = {
 
   // Settings tab
   "settings+parameters":           "Paramétrage actuel",
+  "settings+custom_settings":      "Paramétrages personnalisés",
   "settings+loading_predefined":   "Chargement des paramètres prédéfinis",
+  "settings+loading_personal":     "Chargement des paramètres personnels",
+  "settings+error":                "Une erreur est survenue, veuillez réessayer",
   "settings+modified":             "modifié",
   "settings+predefined_choice":    "Choix d'un paramétrage prédéfini...",
+  "settings+personal_choice":      "Choix d'un paramétrage personnel...",
   "settings+no_result_for":        "Aucun résultat pour",
+  "settings+save":                 "sauvegarder",
+  "settings+delete":               "supprimer",
+  "settings+save_current_as":      "Sauvegarder les paramètres actuels sous le nom",
   "settings+default":              "par défaut",
   "settings+input":                "En entrée",
   "settings+output":               "En sortie",
