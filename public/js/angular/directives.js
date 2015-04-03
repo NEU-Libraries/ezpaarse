@@ -165,7 +165,7 @@ angular.module('ezPAARSE.directives', [])
       }
     };
   })
-  .directive('accordion', function ($compile) {
+  .directive('accordion', function () {
     return {
       restrict: 'E',
       link: function (scope, element, attributes) {

@@ -341,8 +341,8 @@ module.exports = function (app) {
    */
   app.post(/^\/settings\/(.+)/, auth.ensureAuthenticated(true),
     bodyParser.urlencoded({ extended: true }), bodyParser.json(), function (req, res) {
-      var body = req.body || {};
-      var name = req.params[0];
+      var body  = req.body || {};
+      var label = req.params[0];
 
       for (var h in body) {
         if (typeof body[h] !== 'string') { delete body[h]; }
@@ -352,11 +352,21 @@ module.exports = function (app) {
         if (err)   { return res.status(500).end(); }
         if (!user) { return res.status(404).end(); }
 
-        user.settings = user.settings || {};
-        user.settings[name] = body;
+        if (!Array.isArray(user.settings)) {
+          user.settings = [];
+        }
+
+        for (var i = user.settings.length - 1; i >= 0; i--) {
+          if (user.settings[i].label == label) {
+            user.settings[i].headers = body;
+            break;
+          }
+        }
+
+        if (i <= 0) { user.settings.push({ label: label, headers: body }); }
 
         userlist.set(req.user.username, 'settings', user.settings, function (err) {
-          res.status(err ? 500 : 204).end();
+          res.status(err ? 500 : 200).json(user.settings);
         });
       });
     }
@@ -367,17 +377,26 @@ module.exports = function (app) {
    * To remove custom settings
    */
   app.delete(/^\/settings\/(.+)/, auth.ensureAuthenticated(true), function (req, res) {
-    var body = req.body;
+    var body  = req.body;
+    var label = req.params[0];
 
     userlist.get(req.user.username, function (err, user) {
       if (err)   { return res.status(500).end(); }
       if (!user) { return res.status(404).end(); }
 
-      user.settings = user.settings || {};
-      delete user.settings[req.params[0]];
+      if (!Array.isArray(user.settings)) {
+        user.settings = [];
+      }
+
+      for (var i = user.settings.length - 1; i >= 0; i--) {
+        if (user.settings[i].label == label) {
+          user.settings.splice(i, 1);
+          break;
+        }
+      }
 
       userlist.set(req.user.username, 'settings', user.settings, function (err) {
-        res.status(err ? 500 : 204).end();
+        res.status(err ? 500 : 200).json(user.settings);
       });
     });
   });

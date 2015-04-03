@@ -374,9 +374,12 @@ angular.module('ezPAARSE.services', [])
 
       $http.get('/settings')
         .success(function (data) {
-          self.personal = data;
+          self.personal = {};
+          data.forEach(function (setting) {
+            self.personal[setting.label] = setting.headers;
+          });
 
-          var headers = data[self.customType];
+          var headers = self.personal[self.customType];
           if (headers) {
             var settings = self.getSettingsFrom(headers, self.customType);
             if (settings) {
@@ -399,20 +402,24 @@ angular.module('ezPAARSE.services', [])
       var self    = this;
       var headers = this.getHeaders();
 
+      self.saving = {};
       self.savingSettings        = true;
       self.savingSettingsSuccess = false;
       self.settingsError         = false;
 
       $http.post('/settings/' + label, headers)
         .success(function (data) {
-          if (typeof self.personal === 'object') {
-            self.personal[label] = headers;
-          }
+          self.personal = {};
+          data.forEach(function (setting) {
+            self.personal[setting.label] = setting.headers;
+          });
+
           self.savingSettings        = false;
           self.savingSettingsSuccess = true;
         })
         .error(function () {
           self.savingSettings = false;
+          self.saving.error = true;
           self.settingsError  = true;
         });
     };
@@ -423,17 +430,18 @@ angular.module('ezPAARSE.services', [])
     settingService.prototype.deleteSettings = function (label) {
       if (!label) { return; }
 
-      var self    = this;
-      var headers = this.getHeaders();
+      var self = this;
 
       self.deletingSettings = true;
       self.settingsError    = false;
 
       $http({ method: 'DELETE', url: '/settings/' + label })
         .success(function (data) {
-          if (typeof self.personal === 'object') {
-            delete self.personal[label];
-          }
+          self.personal = {};
+          data.forEach(function (setting) {
+            self.personal[setting.label] = setting.headers;
+          });
+
           self.deletingSettings = false;
         })
         .error(function () {
