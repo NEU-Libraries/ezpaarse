@@ -325,7 +325,6 @@ module.exports = function (app) {
    * To get personal settings
    */
   app.get('/settings', auth.ensureAuthenticated(true), function (req, res) {
-    var body = req.body;
 
     userlist.get(req.user.username, function (err, user) {
       if (err)   { return res.status(500).end(); }
@@ -377,7 +376,6 @@ module.exports = function (app) {
    * To remove custom settings
    */
   app.delete(/^\/settings\/(.+)/, auth.ensureAuthenticated(true), function (req, res) {
-    var body  = req.body;
     var label = req.params[0];
 
     userlist.get(req.user.username, function (err, user) {
