@@ -261,7 +261,7 @@ angular.module('ezPAARSE.services', [])
       }
     };
   })
-  .factory('settingService', function (ipCookie, $http) {
+  .factory('settingService', function (ipCookie, $http, $timeout) {
     function settingService() {
       var self = this;
 
@@ -416,6 +416,8 @@ angular.module('ezPAARSE.services', [])
 
           self.savingSettings        = false;
           self.savingSettingsSuccess = true;
+
+          $timeout(function () { self.savingSettingsSuccess = false; }, 1000);
         })
         .error(function () {
           self.savingSettings = false;
