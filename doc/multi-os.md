@@ -17,14 +17,14 @@ apt-get install git make curl python gcc build-essential
 Starting from a [fedora image](http://fedoraproject.org/get-fedora) loaded in a virtual machine, with root privileges or via sudo.
 
 ```
-yum install git make curl python gcc-c++
+yum install tar git make curl python gcc-c++
 ```
 
 ##SUSE prerequisites
  
 (to be verified)
 ```
-yum install git make curl python gcc-c++
+zypper install git make curl python gcc-c++
 ```
 
 ##Mac OS X prerequisites
